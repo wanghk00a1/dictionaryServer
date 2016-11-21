@@ -88,12 +88,6 @@ public class Spider {
             Matcher m2FromDict = getChineseFromDict.matcher(meansFromDict);
 
             while (m2FromDict.find()) {
-                //在Java中(.*?)是第1组，所以用group(1)
-            	/*
-            	System.out.println("\t" +  
-                		StringEscapeUtils.unescapeHtml(m2FromDict.group(1)) 
-                		+ "  " + StringEscapeUtils.unescapeHtml(m2FromDict.group(2))
-            	);*/
             	System.out.print("\t");
             	for(int i=1;i<=m2FromDict.groupCount();i++){
             		if(StringEscapeUtils.unescapeHtml(m2FromDict.group(i))!=null
