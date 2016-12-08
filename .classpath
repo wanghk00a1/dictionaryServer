@@ -13,5 +13,6 @@
 	<classpathentry kind="lib" path="/Users/wang/Documents/JAVA/project2/httpcomponents-client-4.5.2/lib/jna-4.1.0.jar"/>
 	<classpathentry kind="lib" path="/Users/wang/Documents/JAVA/project2/httpcomponents-client-4.5.2/lib/jna-platform-4.1.0.jar"/>
 	<classpathentry kind="lib" path="/Users/wang/Documents/JAVA/project2/commons-lang-2.4.jar"/>
+	<classpathentry kind="lib" path="lib/mysql-connector-java-5.1.40-bin.jar"/>
 	<classpathentry kind="output" path="bin"/>
 </classpath>

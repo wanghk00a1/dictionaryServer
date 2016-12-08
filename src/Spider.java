@@ -14,11 +14,10 @@ public class Spider {
     private static String word;
     
     public Spider(String word){
-    	this.word=word;
+    	Spider.word=word;
     }
 
-	@SuppressWarnings("null")
-	public static String[] search() throws IOException {
+	public String[] search() throws IOException {
     
         CloseableHttpClient httpClient = HttpClients.createDefault();
      /*
@@ -37,6 +36,7 @@ public class Spider {
         HttpGet getWordMeanFromBaidu = new HttpGet("http://dict.baidu.com/s?wd=" + 
         		wordForBaidu + "&ptype=english");
         HttpGet getWordMeanFromDict = new HttpGet("http://dict.cn/" + wordForDict);
+        
         CloseableHttpResponse responseFromYoudao = httpClient.execute(getWordMeanFromYoudao);//取得返回的网页源码
         CloseableHttpResponse responseFromBaidu = httpClient.execute(getWordMeanFromBaidu);
         CloseableHttpResponse responseFromDict = httpClient.execute(getWordMeanFromDict);
@@ -69,6 +69,7 @@ public class Spider {
             }
         } else {
             System.out.println("未查找到释义.");
+            res[0]="NoResult";
             System.exit(0);
         }
         
@@ -92,6 +93,7 @@ public class Spider {
             }
         } else {
             System.out.println("未查找到释义.");
+            res[1]="NoResult";
             System.exit(0);
         }
         
@@ -122,6 +124,7 @@ public class Spider {
             }
         } else {
             System.out.println("未查找到释义.");
+            res[2]="NoResult";
             System.exit(0);
         }
     
