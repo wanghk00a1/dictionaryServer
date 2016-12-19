@@ -27,25 +27,31 @@ public class Spider {
      */
         String wordForYoudao = word.replaceAll(" ","+");
         String wordForBaidu = word.replaceAll(" ","+");
+        String wordForIci= word.replaceAll(" ","%20");
         String wordForDict = word.replaceAll(" ","%20");
         
 
         //根据查找单词构造查找地址
         HttpGet getWordMeanFromYoudao = new HttpGet("http://dict.youdao.com/search?q=" + 
         		wordForYoudao + "&keyfrom=dict.index");
-        HttpGet getWordMeanFromBaidu = new HttpGet("http://dict.baidu.com/s?wd=" + 
-        		wordForBaidu + "&ptype=english");
+        //HttpGet getWordMeanFromBaidu = new HttpGet("http://dict.baidu.com/s?wd=" + 
+        		//wordForBaidu + "&ptype=english");
+        HttpGet getWordMeanFromIci = new HttpGet("http://www.iciba.com/"+
+        		wordForIci);
         HttpGet getWordMeanFromDict = new HttpGet("http://dict.cn/" + wordForDict);
         
         CloseableHttpResponse responseFromYoudao = httpClient.execute(getWordMeanFromYoudao);//取得返回的网页源码
-        CloseableHttpResponse responseFromBaidu = httpClient.execute(getWordMeanFromBaidu);
+        //CloseableHttpResponse responseFromBaidu = httpClient.execute(getWordMeanFromBaidu);
+        CloseableHttpResponse responseFromIci = httpClient.execute(getWordMeanFromIci);
         CloseableHttpResponse responseFromDict = httpClient.execute(getWordMeanFromDict);
 
         String resultFromYoudao = EntityUtils.toString(responseFromYoudao.getEntity());
-        String resultFromBaidu = EntityUtils.toString(responseFromBaidu.getEntity());
+        //String resultFromBaidu = EntityUtils.toString(responseFromBaidu.getEntity());
+        String resultFromIci = EntityUtils.toString(responseFromIci.getEntity());
         String resultFromDict = EntityUtils.toString(responseFromDict.getEntity());
         responseFromYoudao.close();
-        responseFromBaidu.close();
+        //responseFromBaidu.close();
+        responseFromIci.close();
         responseFromDict.close();
         //注意(?s)，意思是让'.'匹配换行符，默认情况下不匹配
         String[] res = {"","",""};
@@ -70,10 +76,9 @@ public class Spider {
         } else {
             System.out.println("未查找到释义.");
             res[0]="NoResult";
-            System.exit(0);
         }
         
-        
+/*        
         Pattern searchMeanPatternFromBaidu = 
         		Pattern.compile("(?s)<div class=\"en-content\">.*?<div><p>.*?</div>");
         Matcher m1FromBaidu = searchMeanPatternFromBaidu.matcher(resultFromBaidu); 
@@ -95,6 +100,33 @@ public class Spider {
             System.out.println("未查找到释义.");
             res[1]="NoResult";
             System.exit(0);
+        }
+ */       
+        Pattern searchMeanPatternFromIci = 
+        		Pattern.compile("(?s)<ul class=\"base-list switch_part\" class=\"\">.*?</ul>");
+        Matcher m1FromIci = searchMeanPatternFromIci.matcher(resultFromIci); 
+        System.out.println("爱词霸释义:");
+        if (m1FromIci.find()) {
+            String meansFromIci = m1FromIci.group();
+            Pattern getChineseFromIci = Pattern.compile("(?m)<span class=\"prop\">(.*?)</span><span>(.*?)</span>"); 
+            Matcher m2FromIci = getChineseFromIci.matcher(meansFromIci);
+
+            //while (m2FromBaidu.find()) {
+            if (m2FromIci.find()){
+            	System.out.print("\t");
+            	for(int i=1;i<=m2FromIci.groupCount();i++){
+            		if(StringEscapeUtils.unescapeHtml(m2FromIci.group(i))!=null
+            				&&
+            			!StringEscapeUtils.unescapeHtml(m2FromIci.group(i)).startsWith("<")) {
+            			System.out.print(StringEscapeUtils.unescapeHtml(m2FromIci.group(i)));
+            			res[2] = res[2]+StringEscapeUtils.unescapeHtml(m2FromIci.group(i));
+            		}
+            	}
+            	System.out.println();
+            } else {
+                System.out.println("未查找到释义.");
+                res[1]="NoResult";
+            }
         }
         
         Pattern searchMeanPatternFromDict = Pattern.compile("(?s)<div class=\"basic clearfix\">.*?<li>.*?</ul>");
@@ -125,7 +157,6 @@ public class Spider {
         } else {
             System.out.println("未查找到释义.");
             res[2]="NoResult";
-            System.exit(0);
         }
     
 	return res;

@@ -1,11 +1,16 @@
 import java.awt.BorderLayout;
 import java.io.DataInputStream;
 import java.io.DataOutputStream;
+import java.io.File;
+import java.io.FileInputStream;
+import java.io.FileOutputStream;
 import java.io.IOException;
 import java.net.ServerSocket;
 import java.net.Socket;
 import java.sql.SQLException;
 import java.util.Date;
+import java.util.HashMap;
+import java.util.Map;
 
 import javax.swing.JFrame;
 import javax.swing.JScrollPane;
@@ -17,6 +22,9 @@ public class Server extends JFrame{
 	 */
 	private static final long serialVersionUID = 1L;
 	private JTextArea jta = new JTextArea();
+	
+	public Map<String, Socket> UserSocketMap = new HashMap<String, Socket>();
+	public String sendname;
 	
 	public static void main(String[] args) 
 			throws ClassNotFoundException, SQLException{
@@ -44,27 +52,25 @@ public class Server extends JFrame{
 				SQLServer sql=new SQLServer(socket);
 				HandleAClient task = new HandleAClient(socket,sql);
 				new Thread(task).start();
-				//ClientNo++;
-
-				
+				ClientNo++;
 			}
 		}
 		catch(IOException ex){
 			System.err.println(ex);
 		}
-		
-		
 	}
 	
 	class HandleAClient implements Runnable{
 		private Socket socket;
 		private SQLServer sql;
-		public HandleAClient(Socket socket,SQLServer sql){
+		String username;
+		public HandleAClient(Socket socket, SQLServer sql){
 			this.socket = socket;
-			this.sql = sql;
+			this.sql=sql;
 		}
-		
 
+
+		@SuppressWarnings("resource")
 		public void run(){
 			try{
 				DataInputStream inputFromClient = new DataInputStream(socket.getInputStream());
@@ -83,7 +89,9 @@ public class Server extends JFrame{
 					
 					else if(order.equals("login")){
 						try {
-							sql.user_login();
+							String userName = sql.user_login();
+							UserSocketMap.put(userName, socket);
+							username=userName;
 						} catch (SQLException e) {
 							// TODO Auto-generated catch block
 							e.printStackTrace();
@@ -100,7 +108,7 @@ public class Server extends JFrame{
 					}
 					
 					else if(order.equals("search")){
-						SearchWord search = new SearchWord(socket);
+						SearchWord search = new SearchWord(socket,username);
 						try {
 							search.Search(sql);
 						} catch (SQLException e) {
@@ -111,25 +119,82 @@ public class Server extends JFrame{
 					}
 					
 					else if(order.equals("like")){
+						try {
+							sql.like_word();
+						} catch (SQLException e) {
+							// TODO Auto-generated catch block
+							e.printStackTrace();
+						}
+					}
+					
+					else if(order.equals("HaveMessage")){
 						//TODO:
+						DataOutputStream outputToClient = new DataOutputStream(socket.getOutputStream());
+						String sname=inputFromClient.readUTF();
+						//sname new massage 
+						String online = sql.online();
+						outputToClient.writeUTF(online);
+						//user online username+' '+username
+						if(sname.equals(sendname)){
+							outputToClient.writeUTF("yes");
+							
+							int length = 0;
+					        byte[] sendBytes = null;
+					        Socket socket = null;
+					        DataOutputStream dos = null;
+					        FileInputStream fis = null;
+							dos = new DataOutputStream(socket.getOutputStream());
+			                File file = new File("/Users/wang/Documents/JAVA/cc.jpg");
+			                fis = new FileInputStream(file);
+			                sendBytes = new byte[1024];
+			                while ((length = fis.read(sendBytes, 0, sendBytes.length)) > 0) {
+			                    dos.write(sendBytes, 0, length);
+			                    dos.flush();
+			                }
+						}
+						//yes  picture
+						//no
+						else outputToClient.writeUTF("no");
 					}
 					
 					else if(order.equals("card")){
 						//TODO:
+						//to username
+						sendname = inputFromClient.readUTF();
+						//picture
+							byte[] inputByte = null;
+					        int length = 0;
+							DataInputStream dis = null;
+					        FileOutputStream fos = null;
+			                dis = new DataInputStream(socket.getInputStream());
+			                fos = new FileOutputStream(new File("/Users/wang/Documents/JAVA/cc.jpg"));
+			                inputByte = new byte[1024];
+			                System.out.println("开始接收数据...");
+			                while ((length = dis.read(inputByte, 0, inputByte.length)) > 0) {
+			                    System.out.println(length);
+			                    fos.write(inputByte, 0, length);
+			                    fos.flush();
+			                }
+			                System.out.println("完成接收");
 					}
 				}
 			}
 			catch(IOException e){
-				System.err.println(e);
+				System.err.println(e+"requary");
+			} catch (SQLException e) {
+				// TODO Auto-generated catch block
+				e.printStackTrace();
 			}
 		}
 	}
 	
 	class SearchWord{
 		private Socket socket;
+		private String un;
 		
-		public SearchWord(Socket socket){
+		public SearchWord(Socket socket, String un){
 			this.socket = socket;
+			this.un=un;
 		}
 
 		public void Search(SQLServer sql) throws SQLException {
@@ -138,7 +203,7 @@ public class Server extends JFrame{
 				DataOutputStream outputToClient = new DataOutputStream(socket.getOutputStream());
 				//while(true){
 					String word = inputFromClient.readUTF();
-					
+					System.out.println(word);
 					//对接收到的单词进行处理
 					//String result;
 					Spider sp= new Spider(word);
@@ -151,7 +216,7 @@ public class Server extends JFrame{
 						outputToClient.writeUTF(result1[0]);
 						outputToClient.writeUTF(result1[1]);
 						outputToClient.writeUTF(result1[2]);
-						sql.sort_word(word);
+						sql.sort_word(word,un);
 					}
 					else
 						outputToClient.writeUTF("fail");
