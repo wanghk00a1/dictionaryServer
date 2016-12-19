@@ -16,7 +16,7 @@ public class Spider {
     public Spider(String word){
     	Spider.word=word;
     }
-
+/*
 	public String[] search() throws IOException {
     
         CloseableHttpClient httpClient = HttpClients.createDefault();
@@ -24,7 +24,7 @@ public class Spider {
         System.out.print("请输入你要查的单词:");
 		s = new Scanner(System.in);
         String word = s.nextLine();
-     */
+     
         String wordForYoudao = word.replaceAll(" ","+");
         String wordForBaidu = word.replaceAll(" ","+");
         String wordForIci= word.replaceAll(" ","%20");
@@ -101,7 +101,7 @@ public class Spider {
             res[1]="NoResult";
             System.exit(0);
         }
- */       
+       
         Pattern searchMeanPatternFromIci = 
         		Pattern.compile("(?s)<ul class=\"base-list switch_part\" class=\"\">.*?</ul>");
         Matcher m1FromIci = searchMeanPatternFromIci.matcher(resultFromIci); 
@@ -128,6 +128,132 @@ public class Spider {
                 res[1]="NoResult";
             }
         }
+        
+        Pattern searchMeanPatternFromDict = Pattern.compile("(?s)<div class=\"basic clearfix\">.*?<li>.*?</ul>");
+        Matcher m1FromDict = searchMeanPatternFromDict.matcher(resultFromDict); 
+        System.out.println("海词词典释义:");
+        if (m1FromDict.find()) {
+            String meansFromDict = m1FromDict.group();//所有解释，包含网页标签
+            Pattern getChineseFromDict = 
+            		Pattern.compile("(?m)<li>(<span>(.*?)</span>)?<strong>(.*?)</strong></li>"); 
+            
+            Matcher m2FromDict = getChineseFromDict.matcher(meansFromDict);
+
+            //while (m2FromDict.find()) {
+            if  (m2FromDict.find()) {
+            	System.out.print("\t");
+            	for(int i=1;i<=m2FromDict.groupCount();i++){
+            		if(StringEscapeUtils.unescapeHtml(m2FromDict.group(i))!=null
+            				&&
+            			!StringEscapeUtils.unescapeHtml(m2FromDict.group(i)).startsWith("<")) {
+            			
+            			System.out.print(StringEscapeUtils.unescapeHtml(m2FromDict.group(i)));
+            			res[2] = res[2]+StringEscapeUtils.unescapeHtml(m2FromDict.group(i));
+            		}
+            		
+            	}
+            	System.out.println();
+            }
+        } else {
+            System.out.println("未查找到释义.");
+            res[2]="NoResult";
+        }
+    
+	return res;
+	}
+	*/
+    public static String[] search() throws IOException {
+        
+        CloseableHttpClient httpClient = HttpClients.createDefault();
+     /*
+        System.out.print("请输入你要查的单词:");
+		s = new Scanner(System.in);
+        String word = s.nextLine();
+     */
+        String wordForYoudao = word.replaceAll(" ","+");
+        //String wordForBaidu = word.replaceAll(" ","+");
+        String wordForBing = word.replaceAll(" ","+");
+        String wordForIci= word.replaceAll(" ","%20");
+        String wordForDict = word.replaceAll(" ","%20");
+        
+
+        //根据查找单词构造查找地址
+        HttpGet getWordMeanFromYoudao = new HttpGet("http://dict.youdao.com/search?q=" + 
+        		wordForYoudao + "&keyfrom=dict.index");
+        HttpGet getWordMeanFromBing = new HttpGet("http://cn.bing.com/dict/search?q=" + wordForBing);
+        HttpGet getWordMeanFromIci = new HttpGet("http://www.iciba.com/"+ wordForIci);
+        HttpGet getWordMeanFromDict = new HttpGet("http://dict.cn/" + wordForDict);
+        
+        CloseableHttpResponse responseFromYoudao = httpClient.execute(getWordMeanFromYoudao);//取得返回的网页源码
+        //CloseableHttpResponse responseFromBaidu = httpClient.execute(getWordMeanFromBaidu);
+        CloseableHttpResponse responseFromBing = httpClient.execute(getWordMeanFromBing);
+        CloseableHttpResponse responseFromIci = httpClient.execute(getWordMeanFromIci);
+        CloseableHttpResponse responseFromDict = httpClient.execute(getWordMeanFromDict);
+
+        String resultFromYoudao = EntityUtils.toString(responseFromYoudao.getEntity());
+        //String resultFromBaidu = EntityUtils.toString(responseFromBaidu.getEntity());
+        String resultFromBing = EntityUtils.toString(responseFromBing.getEntity());
+        String resultFromIci = EntityUtils.toString(responseFromIci.getEntity());
+        String resultFromDict = EntityUtils.toString(responseFromDict.getEntity());
+        responseFromYoudao.close();
+        //responseFromBaidu.close();
+        responseFromBing.close();
+        responseFromIci.close();
+        responseFromDict.close();
+        //注意(?s)，意思是让'.'匹配换行符，默认情况下不匹配
+        String[] res = {"","",""};
+        
+        Pattern searchMeanPatternFromYoudao = 
+        		Pattern.compile("(?s)<div class=\"trans-container.*?<ul>.*?</div>");
+        Matcher m1FromYoudao = searchMeanPatternFromYoudao.matcher(resultFromYoudao); //m1是获取包含翻译的整个<div>的
+        System.out.println("有道释义:");
+        if (m1FromYoudao.find()) {
+            String meansFromYoudao = m1FromYoudao.group();//所有解释，包含网页标签
+            Pattern getChineseFromYoudao = Pattern.compile("(?m)<li>(.*?)</li>"); //(?m)代表按行匹配
+            Matcher m2FromYoudao = getChineseFromYoudao.matcher(meansFromYoudao);
+            
+            
+            //while (m2FromYoudao.find()) {
+            if(m2FromYoudao.find()) {
+                //在Java中(.*?)是第1组，所以用group(1)
+            	
+            	res[0]=m2FromYoudao.group(1);
+                System.out.println("\t" + m2FromYoudao.group(1));
+            }
+        } else {
+            System.out.println("未查找到释义.");
+            res[0]="NoResult";
+        }
+              
+        Pattern searchMeanPatternFromIci = 
+        		Pattern.compile("(?s)<ul class=\"base-list switch_part\" class=\"\">.*?</ul>");
+        Matcher m1FromIci = searchMeanPatternFromIci.matcher(resultFromIci); 
+        System.out.println("爱词霸释义:");
+        if (m1FromIci.find()) {
+            String meansFromIci = m1FromIci.group();
+            Pattern getChineseFromIci = Pattern.compile("(?m)(<span class=\"prop\">(.*?)</span>)?<span>(.*?)</span>"); 
+            Matcher m2FromIci = getChineseFromIci.matcher(meansFromIci);
+
+            //while (m2FromBaidu.find()) {
+            if (m2FromIci.find()){
+            	System.out.print("\t");
+            	for(int i=1;i<=m2FromIci.groupCount();i++){
+            	
+            		if(StringEscapeUtils.unescapeHtml(m2FromIci.group(i))!=null
+            				&& !StringEscapeUtils.unescapeHtml(m2FromIci.group(i)).startsWith("<")
+            			) {
+            			System.out.print(StringEscapeUtils.unescapeHtml(m2FromIci.group(i)));
+            			res[1] = res[1]+StringEscapeUtils.unescapeHtml(m2FromIci.group(i));
+            		}
+            	}
+            	System.out.println();
+            }
+        } else {
+            System.out.println("未查找到释义.");
+            res[1]="NoResult";
+        }
+       
+
         
         Pattern searchMeanPatternFromDict = Pattern.compile("(?s)<div class=\"basic clearfix\">.*?<li>.*?</ul>");
         Matcher m1FromDict = searchMeanPatternFromDict.matcher(resultFromDict); 

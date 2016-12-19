@@ -74,7 +74,7 @@ public class Server extends JFrame{
 		public void run(){
 			try{
 				DataInputStream inputFromClient = new DataInputStream(socket.getInputStream());
-				//DataOutputStream ouputToClient = new DataOutputStream(socket.getOutputStream());
+				DataOutputStream outputToClient = new DataOutputStream(socket.getOutputStream());
 				while(true){
 					String order = inputFromClient.readUTF();
 					if(order.equals("register")){
@@ -129,28 +129,33 @@ public class Server extends JFrame{
 					
 					else if(order.equals("HaveMessage")){
 						//TODO:
-						DataOutputStream outputToClient = new DataOutputStream(socket.getOutputStream());
 						String sname=inputFromClient.readUTF();
 						//sname new massage 
 						String online = sql.online();
 						outputToClient.writeUTF(online);
 						//user online username+' '+username
 						if(sname.equals(sendname)){
+							sendname = " ";
+							System.out.println("开始发送");
 							outputToClient.writeUTF("yes");
 							
 							int length = 0;
 					        byte[] sendBytes = null;
-					        Socket socket = null;
-					        DataOutputStream dos = null;
-					        FileInputStream fis = null;
-							dos = new DataOutputStream(socket.getOutputStream());
+					        
 			                File file = new File("/Users/wang/Documents/JAVA/cc.jpg");
-			                fis = new FileInputStream(file);
-			                sendBytes = new byte[1024];
+			                FileInputStream fis = new FileInputStream(file);
+			                //sendBytes = new byte[1024];
+			                sendBytes=new byte[1024];
 			                while ((length = fis.read(sendBytes, 0, sendBytes.length)) > 0) {
-			                    dos.write(sendBytes, 0, length);
-			                    dos.flush();
+			                	System.out.println(length);
+			                	outputToClient.write(sendBytes, 0, length);
+			                	outputToClient.flush();
 			                }
+			                outputToClient.writeUTF("aaa");
+			                //fis.close();
+			                //outputToClient.flush();
+			                System.out.println("发送完成");
+			                
 						}
 						//yes  picture
 						//no
@@ -164,17 +169,17 @@ public class Server extends JFrame{
 						//picture
 							byte[] inputByte = null;
 					        int length = 0;
-							DataInputStream dis = null;
-					        FileOutputStream fos = null;
-			                dis = new DataInputStream(socket.getInputStream());
-			                fos = new FileOutputStream(new File("/Users/wang/Documents/JAVA/cc.jpg"));
+							
+					        FileOutputStream fos = new FileOutputStream(new File("/Users/wang/Documents/JAVA/cc.jpg"));
 			                inputByte = new byte[1024];
+					        //inputByte = new byte[64];
 			                System.out.println("开始接收数据...");
-			                while ((length = dis.read(inputByte, 0, inputByte.length)) > 0) {
+			                while ((length = inputFromClient.read(inputByte, 0, inputByte.length)) > 1023) {
 			                    System.out.println(length);
 			                    fos.write(inputByte, 0, length);
 			                    fos.flush();
 			                }
+			                //fos.flush();
 			                System.out.println("完成接收");
 					}
 				}

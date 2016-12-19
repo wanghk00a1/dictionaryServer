@@ -179,6 +179,7 @@ public class SQLServer {
 		FileInputStream fis = new FileInputStream(file);
 	} 
 	
+	@SuppressWarnings("null")
 	public String online() throws IOException, SQLException{
 		DataInputStream inputFromClient = new DataInputStream(socket.getInputStream());
 		DataOutputStream outputToClient = new DataOutputStream(socket.getOutputStream());
@@ -186,13 +187,16 @@ public class SQLServer {
 		String sql_order = "select UNAME from DictUser where UONLINE=1";
 		ResultSet resultset = statement.executeQuery(sql_order);
 		
-		StringBuffer online = null;
+		StringBuffer online = new StringBuffer();
 		int i=1;
 		while(resultset.next()){
-			online.append(resultset.getString(i)+" ");
-			i++;
+			System.out.println(resultset.getString(1));
+			String uname = resultset.getString(1) + " ";
+			System.out.println("uname  "+uname);
+			online.append(uname);
+			//i++;
 		}
-		
+		System.out.println("online" + online);
 		return online.toString();
 		
 		
