@@ -7,6 +7,7 @@ import java.io.FileOutputStream;
 import java.io.IOException;
 import java.net.ServerSocket;
 import java.net.Socket;
+import java.security.NoSuchAlgorithmException;
 import java.sql.SQLException;
 import java.util.Date;
 import java.util.HashMap;
@@ -82,7 +83,7 @@ public class Server extends JFrame{
 						try {
 							result = sql.add_new_user();
 							if(!result.equals("fail")) System.out.println(result);
-						} catch (SQLException e) {
+						} catch (SQLException | NoSuchAlgorithmException e) {
 							e.printStackTrace();
 						}
 					}
@@ -92,7 +93,7 @@ public class Server extends JFrame{
 							String userName = sql.user_login();
 							UserSocketMap.put(userName, socket);
 							username=userName;
-						} catch (SQLException e) {
+						} catch (SQLException | NoSuchAlgorithmException e) {
 							// TODO Auto-generated catch block
 							e.printStackTrace();
 						}
@@ -149,7 +150,7 @@ public class Server extends JFrame{
 			                sendBytes=new byte[1024];
 			                length = fis.read(sendBytes, 0, sendBytes.length);
 			                while (length > 1023) {
-			                	System.out.println(length);
+			                	//System.out.println(length);
 			                	outputToClient.write(sendBytes, 0, length);
 			                	outputToClient.flush();
 			                	length = fis.read(sendBytes, 0, sendBytes.length);
@@ -175,13 +176,14 @@ public class Server extends JFrame{
 							byte[] inputByte = null;
 					        int length = 0;
 							
-					        FileOutputStream fos = new FileOutputStream(new File("/Users/wang/Documents/JAVA/cc.jpg"));
+					        FileOutputStream fos = new 
+					        		FileOutputStream(new File("/Users/wang/Documents/JAVA/cc.jpg"));
 			                inputByte = new byte[1024];
 					        //inputByte = new byte[64];
 			                System.out.println("开始接收数据...");
 			                length = inputFromClient.read(inputByte, 0, inputByte.length);
 			                while (length > 1023) {
-			                    System.out.println(length);
+			                    //System.out.println(length);
 			                    fos.write(inputByte, 0, length);
 			                    fos.flush();
 			                    length = inputFromClient.read(inputByte, 0, inputByte.length);

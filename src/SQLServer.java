@@ -5,6 +5,8 @@ import java.io.FileInputStream;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.net.Socket;
+import java.security.MessageDigest;
+import java.security.NoSuchAlgorithmException;
 import java.sql.Connection;
 import java.sql.DriverManager;
 import java.sql.ResultSet;
@@ -34,14 +36,39 @@ public class SQLServer {
 		this.socket=socket;
 	}
 	
-	public String add_new_user() throws SQLException, IOException{
+	String sel(String password) throws NoSuchAlgorithmException{
+		MessageDigest alga = MessageDigest.getInstance("MD5");
+		alga.update(password.getBytes());
+		byte[] digesta = null;
+		digesta = alga.digest();
+		String rs = byte2hex(digesta);
+		return rs;
+	}
+	
+	static String byte2hex(byte[] b) {
+		String hs = "";
+		String stmp = "";
+		for (int n = 0; n < b.length; n++) {
+			stmp = (java.lang.Integer.toHexString(b[n] & 0XFF));
+			if (stmp.length() == 1) {
+				hs = hs + "0" + stmp;
+			} else {
+				hs = hs + stmp;
+			}
+		}
+		return hs.toUpperCase();
+	}
+	
+	public String add_new_user() throws SQLException, IOException, NoSuchAlgorithmException{
 		
 		DataInputStream inputFromClient = new DataInputStream(socket.getInputStream());
 		DataOutputStream outputToClient = new DataOutputStream(socket.getOutputStream());
 		String name = inputFromClient.readUTF();
 		String password = inputFromClient.readUTF();
 		
-		String sql_order = "select UNAME from DictUser where UNAME='" + name +"'";
+		String new_password = sel(password);
+		
+		String sql_order = "select UNAME from DictUsers where UNAME='" + name +"'";
 		ResultSet resultset = statement.executeQuery(sql_order);
 		if(resultset.next()) {		//
 			outputToClient.writeUTF("fail");
@@ -53,7 +80,7 @@ public class SQLServer {
 			int UID=numOfClient+1000;
 			
 			//insert into user table for new user
-			sql_order = "insert into DictUser values ("+ UID +", '"+name+"', '"+password+"', 0)";
+			sql_order = "insert into DictUsers values ("+ UID +", '"+name+"', '"+new_password+"', 0)";
 			System.out.println(sql_order);
 					//may not correct for ''
 			int result = statement.executeUpdate(sql_order);
@@ -74,23 +101,25 @@ public class SQLServer {
 	}
 	
 	public String user_login() 
-			throws SQLException, IOException{
+			throws SQLException, IOException, NoSuchAlgorithmException{
 		DataInputStream inputFromClient = new DataInputStream(socket.getInputStream());
 		DataOutputStream outputToClient = new DataOutputStream(socket.getOutputStream());
 		String name = inputFromClient.readUTF();
 		String password = inputFromClient.readUTF();
 		
+		String new_password = sel(password);
+		
 		
 		this.user_name=name;
 		System.out.println(user_name);
 		
-		String sql_order = "select UPASSWORD from DictUser where UNAME='" + name +"'";
+		String sql_order = "select UPASSWORD from DictUsers where UNAME='" + name +"'";
 		ResultSet resultset = statement.executeQuery(sql_order);
 		
 		if(!resultset.next())
 			outputToClient.writeUTF("fail1");
-		else if(resultset.getString(1).equals(password)) {
-			sql_order = "update DictUser set UONLINE=1 where UNAME='" + name +"'"; 
+		else if(resultset.getString(1).equals(new_password)) {
+			sql_order = "update DictUsers set UONLINE=1 where UNAME='" + name +"'"; 
 			int result = statement.executeUpdate(sql_order);
 			if(result>0) {
 				//TODO:增加向所有用户发送在线信息。
@@ -110,7 +139,7 @@ public class SQLServer {
 		String name = inputFromClient.readUTF();
 		
 		
-		String sql_order = "update DictUser set UONLINE=0 where UNAME='" + name +"'"; 
+		String sql_order = "update DictUsers set UONLINE=0 where UNAME='" + name +"'"; 
 		System.out.println("log out success");
 		int result = statement.executeUpdate(sql_order);
 		if(result>0) {
@@ -179,12 +208,11 @@ public class SQLServer {
 		FileInputStream fis = new FileInputStream(file);
 	} 
 	
-	@SuppressWarnings("null")
-	public String online() throws IOException, SQLException{
+	@SuppressWarnings("null")public String online() throws IOException, SQLException{
 		DataInputStream inputFromClient = new DataInputStream(socket.getInputStream());
 		DataOutputStream outputToClient = new DataOutputStream(socket.getOutputStream());
 		
-		String sql_order = "select UNAME from DictUser where UONLINE=1";
+		String sql_order = "select UNAME from DictUsers where UONLINE=1";
 		ResultSet resultset = statement.executeQuery(sql_order);
 		
 		StringBuffer online = new StringBuffer();
@@ -197,9 +225,7 @@ public class SQLServer {
 			//i++;
 		}
 		System.out.println("online" + online);
-		return online.toString();
-		
-		
+		return online.toString();	
 	}
 }
 
