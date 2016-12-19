@@ -130,6 +130,7 @@ public class Server extends JFrame{
 					else if(order.equals("HaveMessage")){
 						//TODO:
 						String sname=inputFromClient.readUTF();
+						System.out.println(sname);
 						//sname new massage 
 						String online = sql.online();
 						outputToClient.writeUTF(online);
@@ -146,12 +147,16 @@ public class Server extends JFrame{
 			                FileInputStream fis = new FileInputStream(file);
 			                //sendBytes = new byte[1024];
 			                sendBytes=new byte[1024];
-			                while ((length = fis.read(sendBytes, 0, sendBytes.length)) > 0) {
+			                length = fis.read(sendBytes, 0, sendBytes.length);
+			                while (length > 1023) {
 			                	System.out.println(length);
 			                	outputToClient.write(sendBytes, 0, length);
 			                	outputToClient.flush();
+			                	length = fis.read(sendBytes, 0, sendBytes.length);
 			                }
-			                outputToClient.writeUTF("aaa");
+			                outputToClient.write(sendBytes, 0, length);
+		                	outputToClient.flush();
+			                //outputToClient.writeUTF("aaa");
 			                //fis.close();
 			                //outputToClient.flush();
 			                System.out.println("发送完成");
@@ -174,11 +179,15 @@ public class Server extends JFrame{
 			                inputByte = new byte[1024];
 					        //inputByte = new byte[64];
 			                System.out.println("开始接收数据...");
-			                while ((length = inputFromClient.read(inputByte, 0, inputByte.length)) > 1023) {
+			                length = inputFromClient.read(inputByte, 0, inputByte.length);
+			                while (length > 1023) {
 			                    System.out.println(length);
 			                    fos.write(inputByte, 0, length);
 			                    fos.flush();
+			                    length = inputFromClient.read(inputByte, 0, inputByte.length);
 			                }
+			                fos.write(inputByte, 0, length);
+		                    fos.flush();
 			                //fos.flush();
 			                System.out.println("完成接收");
 					}
